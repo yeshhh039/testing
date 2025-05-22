@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Student Attendance System</h2>
+        
+        <!-- Add Student Form -->
+        <div class="card p-3 mt-3">
+            <h4>Add Student</h4>
+            <div class="mb-3">
+                <input type="text" id="studentName" class="form-control" placeholder="Enter Student Name">
+            </div>
+            <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="card p-3 mt-3">
+            <h4>Mark Attendance</h4>
+            <div class="mb-3">
+                <label>Select Date:</label>
+                <input type="date" id="attendanceDate" class="form-control">
+            </div>
+            <table class="table table-bordered mt-2">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Attendance Report & Actions -->
+        <div class="card p-3 mt-3">
+            <h4>Attendance Report</h4>
+            <button class="btn btn-success" onclick="filterAttendance('Present')">Show Present</button>
+            <button class="btn btn-danger" onclick="filterAttendance('Absent')">Show Absent</button>
+            <button class="btn btn-secondary" onclick="resetFilter()">Show All</button>
+            <button class="btn btn-warning mt-2" onclick="clearAll()">Clear All Data</button>
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="card p-3 mt-3">
+            <h4>Attendance Summary</h4>
+            <p>Total Students: <span id="totalStudents">0</span></p>
+            <p>Present: <span id="presentCount">0</span></p>
+            <p>Absent: <span id="absentCount">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+
+        function addStudent() {
+            let name = document.getElementById('studentName').value;
+            if (name.trim() === '') {
+                alert('Please enter a valid student name');
+                return;
+            }
+            students.push({ name, attendance: 'Absent' });
+            localStorage.setItem('students', JSON.stringify(students));
+            document.getElementById('studentName').value = '';
+            renderTable();
+        }
+
+        function markAttendance(index, status) {
+            students[index].attendance = status;
+            localStorage.setItem('students', JSON.stringify(students));
+            renderTable();
+        }
+
+        function editStudent(index) {
+            let newName = prompt("Enter new name:", students[index].name);
+            if (newName && newName.trim() !== "") {
+                students[index].name = newName;
+                localStorage.setItem('students', JSON.stringify(students));
+                renderTable();
+            }
+        }
+
+        function removeStudent(index) {
+            if (confirm("Are you sure you want to remove this student?")) {
+                students.splice(index, 1);
+                localStorage.setItem('students', JSON.stringify(students));
+                renderTable();
+            }
+        }
+
+        function renderTable() {
+            let tableBody = document.getElementById('studentTable');
+            tableBody.innerHTML = '';
+            students.forEach((student, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${student.name}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="markAttendance(${index}, 'Present')">Present</button>
+                            <button class="btn btn-danger btn-sm" onclick="markAttendance(${index}, 'Absent')">Absent</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editStudent(${index})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="removeStudent(${index})">Delete</button>
+                        </td>
+                    </tr>`;
+            });
+            updateSummary();
+        }
+
+        function filterAttendance(status) {
+            let tableBody = document.getElementById('studentTable');
+            tableBody.innerHTML = '';
+            students.filter(student => student.attendance === status).forEach((student, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${student.name}</td>
+                        <td>${student.attendance}</td>
+                    </tr>`;
+            });
+        }
+
+        function resetFilter() {
+            renderTable();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalStudents').innerText = students.length;
+            document.getElementById('presentCount').innerText = students.filter(s => s.attendance === 'Present').length;
+            document.getElementById('absentCount').innerText = students.filter(s => s.attendance === 'Absent').length;
+        }
+
+        function clearAll() {
+            if (confirm("Are you sure you want to clear all student data?")) {
+                students = [];
+                localStorage.removeItem('students');
+                renderTable();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', renderTable);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
